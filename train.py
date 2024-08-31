@@ -30,24 +30,24 @@ class Config:
     name: str = "exp"
     run_number: int = 0
     # model params
-    embedding_dim: int = 64
+    embedding_dim: int = 128
     n_filters: int = 64
     hidden_dim: int = 512
     num_layers: int = 4
-    num_heads: int = 4
+    num_heads: int = 64
     seq_len: int = 300
     stretch_factor: int = 4
-    attention_dropout: float = 0.5
+    attention_dropout: float = 0.1
     residual_dropout: float = 0.1
     embedding_dropout: float = 0.3
     # training params
-    learning_rate: float = 3e-4
+    learning_rate: float = 1.1e-5
     warmup_ratio: float = 0.1
     betas: Tuple[float, float] = (0.9, 0.99)
-    weight_decay: float = 0.0
-    clip_grad: Optional[float] = 1.0
+    weight_decay: float = 1.5e-4
+    clip_grad: Optional[float] = 5.0
     batch_size: int = 32
-    num_updates: int = 50_000
+    num_updates: int = 30_000
     log_interval: int = 500
     num_workers: int = 8
     label_smoothing: float = 0.0
