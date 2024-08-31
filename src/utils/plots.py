@@ -10,7 +10,7 @@ def plot_bars(names, rewards, scales, name='exp'):
 
     plt.bar(
         names, 
-        [r / s for r, s in zip(rewards, scales)],
+        [(r / s).mean() for r, s in zip(rewards, scales)],
         list(mcolors.TABLEAU_COLORS.keys())[:len(names)]
     )
     plt.ylabel('Normalized score')

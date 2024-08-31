@@ -28,15 +28,16 @@ print(f"DEVICE: {DEVICE}")
 class Config:
     # wandb params
     project: str = "ad"
-    group: str = "test_task"
-    name: str = "test"
+    group: str = "intern_task"
+    name: str = "exp"
+    run_number: int = 0
     # model params
     embedding_dim: int = 64
     n_filters: int = 64
     hidden_dim: int = 512
     num_layers: int = 4
     num_heads: int = 4
-    seq_len: int = 30
+    seq_len: int = 300
     stretch_factor: int = 4
     attention_dropout: float = 0.5
     residual_dropout: float = 0.1
@@ -47,20 +48,20 @@ class Config:
     betas: Tuple[float, float] = (0.9, 0.99)
     weight_decay: float = 0.0
     clip_grad: Optional[float] = 1.0
-    batch_size: int = 8
-    num_updates: int = 30
-    log_interval: int = 20
-    num_workers: int = 4
+    batch_size: int = 32
+    num_updates: int = 50_000
+    log_interval: int = 500
+    num_workers: int = 8
     label_smoothing: float = 0.0
     # evaluation params
-    num_eval_envs: int = 20 #2_000
-    eval_interval: int = 10
-    eval_steps: int = 30
+    num_eval_envs: int = 200
+    eval_interval: int = 1000
+    eval_steps: int = 300
     # general params
     train_seed: int = 0
     eval_seed: int = 100
     # data
-    num_train_envs: int = 100 #10_000
+    num_train_envs: int = 10_000
     num_arms: int = 10
     traj_name: str = 'game'
     num_iterations: int = 300
@@ -247,4 +248,10 @@ def train(config: Config):
     wandb.finish()
 
 if __name__ == "__main__":
-    train()
+    for i in range(3):
+        print(f'Runs: {i}')
+        config = Config()
+        config.train_seed = config.run_number = i
+        config.eval_seed = 100 + i
+        config.name = f'exp_{i}'
+        train(config=config)
