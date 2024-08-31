@@ -17,7 +17,7 @@ class Config:
     num_arms: int = 10
     traj_name: str = 'game'
     num_iterations: int = 300
-    data_dir: str = 'train_data'
+    data_directory: str = ''
     rho: int = 2
     seed: int = 0
     
@@ -104,7 +104,7 @@ def process(
     )
 
 def generate_dataset(probs: np.ndarray, seed: int, config: Config):
-    data_path = os.path.join(os.path.dirname(__file__), '..', f'{config.data_dir}_{seed}')
+    data_path = os.path.join(config.data_directory, f'traj_{seed}')
     os.makedirs(data_path, exist_ok=True)
 
     cores = os.cpu_count()

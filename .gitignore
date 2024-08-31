@@ -3,6 +3,7 @@
 *.npz
 train_data*
 wandb
+datafiles
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

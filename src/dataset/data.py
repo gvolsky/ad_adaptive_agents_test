@@ -23,7 +23,6 @@ class SequenceDataset(Dataset):
         self.rewards = np.hstack(data["reward"]).T
         self.cumulative_rewards = np.array([cumulative_rewards[-1] for cumulative_rewards in data["cumulative_rewards"]])
         self.max_prob = np.array([probs.max() for probs in data['probs']])
-        print(self.act.shape)
 
     def _get_data(self, idx):
         num_hists = self.act.shape[0]

@@ -4,6 +4,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from functools import partial
 from typing import Optional, Tuple
+from itertools import chain
 
 import numpy as np
 import pyrallis
@@ -18,6 +19,7 @@ import wandb
 from src.ad.model import Transformer
 from src.dataset import SequenceDataset, generate_dataset, generate_probs
 from src.envs import BernoulliBandits
+from src.utils import plot_bars
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"DEVICE: {DEVICE}")
@@ -34,7 +36,7 @@ class Config:
     hidden_dim: int = 512
     num_layers: int = 4
     num_heads: int = 4
-    seq_len: int = 300
+    seq_len: int = 30
     stretch_factor: int = 4
     attention_dropout: float = 0.5
     residual_dropout: float = 0.1
@@ -47,23 +49,23 @@ class Config:
     clip_grad: Optional[float] = 1.0
     batch_size: int = 8
     num_updates: int = 30
-    log_interval: int = 10
+    log_interval: int = 20
     num_workers: int = 4
     label_smoothing: float = 0.0
     # evaluation params
     num_eval_envs: int = 20 #2_000
     eval_interval: int = 10
-    eval_steps: int = 300
+    eval_steps: int = 30
     # general params
     train_seed: int = 0
     eval_seed: int = 100
     # data
-    num_train_envs: int = 1000 #10_000
+    num_train_envs: int = 100 #10_000
     num_arms: int = 10
     traj_name: str = 'game'
     num_iterations: int = 300
-    data_dir: str = 'train_data'
     rho: int = 2
+    data_directory: str = os.path.join(os.path.dirname(__file__), "datafiles")
 
 
 def get_rngs(train_seed, eval_seed):
@@ -133,16 +135,17 @@ def train(config: Config):
     train_data_path = generate_dataset(train_probs, config.train_seed, config)
 
     dataset = SequenceDataset(train_data_path, config.seq_len)
-    dataloader = DataLoader(
-        dataset=dataset,
-        batch_size=config.batch_size,
-        shuffle=True,
-        pin_memory=True,
-        num_workers=config.num_workers,
-        persistent_workers=True,
-        drop_last=True,
+    dataloader = chain(
+        *[DataLoader(
+            dataset=dataset,
+            batch_size=config.batch_size,
+            shuffle=True,
+            pin_memory=True,
+            num_workers=config.num_workers,
+            persistent_workers=True,
+            drop_last=True,
+        ) for _ in range(10)]
     )
-    dataloader = iter(dataloader)
 
     model = Transformer(config=config).to(DEVICE)
     model.train()
@@ -202,9 +205,7 @@ def train(config: Config):
             eval_rewards = evaluating(odd_envs, model, config)
             wandb.log({f"eval/reward_env_{i}": reward for i, reward in enumerate(eval_rewards)})
 
-    
-
-    checkpoints = os.path.join(os.path.dirname(__file__), 'checkpoints')
+    checkpoints = os.path.join(config.data_directory, 'checkpoints')
     os.makedirs(checkpoints, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(checkpoints, f'model_{uuid.uuid4()}')) 
 
@@ -227,13 +228,20 @@ def train(config: Config):
     uni_rw = evaluating(uni_envs, model, config)
 
     np.savez(
-        os.path.join(checkpoints, f'eval_{config.eval_seed}_{uuid.uuid4()}'),
+        os.path.join(config.data_directory, f'eval_{config.eval_seed}_{uuid.uuid4()}'),
         even_scale=even_max_mean,
         odd_scale=odd_max_mean,
         uni_scale=uni_max_mean,
         even_reward=even_rw,
         odd_reward=odd_rw,
         uni_reward=uni_rw
+        )
+    
+    plot_bars(
+        ['even', 'odd', 'uniform'],
+        [even_rw.mean(), odd_rw.mean(), uni_rw.mean()],
+        [even_max_mean, odd_max_mean, uni_max_mean],
+        name=f'bars/runs_{config.eval_seed}'
         )
     
     wandb.finish()
