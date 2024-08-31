@@ -4,10 +4,8 @@ import uuid
 from dataclasses import asdict, dataclass
 from functools import partial
 from typing import Optional, Tuple
-from itertools import chain
 
 import numpy as np
-import pyrallis
 import torch
 import torch.nn.functional as F
 from gym.vector import SyncVectorEnv
@@ -27,8 +25,8 @@ print(f"DEVICE: {DEVICE}")
 @dataclass
 class Config:
     # wandb params
-    project: str = "ad"
-    group: str = "intern_task"
+    project: str = "intern_task"
+    group: str = "ad"
     name: str = "exp"
     run_number: int = 0
     # model params
@@ -72,6 +70,11 @@ class Config:
 def get_rngs(train_seed, eval_seed):
     return np.random.default_rng(train_seed), np.random.default_rng(eval_seed)
 
+def cycle(dataloader: DataLoader):
+    while True:
+        for batch in dataloader:
+            yield batch
+
 @torch.no_grad()
 def evaluating(vec_env, model, config: Config):
     cumulative_reward = np.zeros(config.num_eval_envs)
@@ -113,7 +116,6 @@ def evaluating(vec_env, model, config: Config):
     return cumulative_reward 
 
     
-@pyrallis.wrap()
 def train(config: Config):
     torch.manual_seed(config.train_seed)
     wandb.init(
@@ -136,16 +138,16 @@ def train(config: Config):
     train_data_path = generate_dataset(train_probs, config.train_seed, config)
 
     dataset = SequenceDataset(train_data_path, config.seq_len)
-    dataloader = chain(
-        *[DataLoader(
+    dataloader = cycle(
+        DataLoader(
             dataset=dataset,
             batch_size=config.batch_size,
             shuffle=True,
             pin_memory=True,
             num_workers=config.num_workers,
             persistent_workers=True,
-            drop_last=True,
-        ) for _ in range(10)]
+            drop_last=True
+        )
     )
 
     model = Transformer(config=config).to(DEVICE)
