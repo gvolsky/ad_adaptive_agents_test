@@ -34,7 +34,7 @@ class Config:
     n_filters: int = 64
     hidden_dim: int = 512
     num_layers: int = 4
-    num_heads: int = 64
+    num_heads: int = 128
     seq_len: int = 300
     stretch_factor: int = 4
     attention_dropout: float = 0.1
@@ -46,13 +46,13 @@ class Config:
     betas: Tuple[float, float] = (0.9, 0.99)
     weight_decay: float = 1.5e-4
     clip_grad: Optional[float] = 5.0
-    batch_size: int = 32
-    num_updates: int = 30_000
+    batch_size: int = 64
+    num_updates: int = 20_000
     log_interval: int = 500
     num_workers: int = 8
     label_smoothing: float = 0.0
     # evaluation params
-    num_eval_envs: int = 200
+    num_eval_envs: int = 64
     eval_interval: int = 1000
     eval_steps: int = 300
     # general params
@@ -152,6 +152,10 @@ def train(config: Config):
 
     model = Transformer(config=config).to(DEVICE)
     model.train()
+
+    print(f'''
+          Model Parameters: {sum(param.numel() for param in model.parameters())}
+    ''')
 
     optimizer = torch.optim.AdamW(
         params=model.parameters(),
