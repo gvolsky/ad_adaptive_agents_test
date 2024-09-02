@@ -20,4 +20,3 @@ class BernoulliBandits(gym.Env):
         self.rng = np.random.default_rng(seed)
 
         return 0, {}
-
