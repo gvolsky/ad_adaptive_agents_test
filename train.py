@@ -1,7 +1,7 @@
 import gc
+import math
 import os
 import uuid
-import math
 from dataclasses import asdict, dataclass
 from functools import partial
 from typing import Optional, Tuple
@@ -17,10 +17,10 @@ import wandb
 from src.ad.model import Transformer
 from src.dataset import SequenceDataset, generate_dataset, generate_probs
 from src.envs import BernoulliBandits
-from src.utils import plot_bars
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"DEVICE: {DEVICE}")
+
 
 @dataclass
 class Config:
@@ -274,13 +274,6 @@ def train(config: Config):
         even_reward=even_rw,
         odd_reward=odd_rw,
         uni_reward=uni_rw
-        )
-    
-    plot_bars(
-        ['even', 'odd', 'uniform'],
-        [even_rw.mean(), odd_rw.mean(), uni_rw.mean()],
-        [even_max_mean, odd_max_mean, uni_max_mean],
-        name=f'bars/runs_{config.eval_seed}'
         )
     
     wandb.finish()

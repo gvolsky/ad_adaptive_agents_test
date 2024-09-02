@@ -1,2 +1,2 @@
-from .ucb import UCB1
 from .random import Random
+from .ucb import UCB1
