@@ -1,7 +1,10 @@
 ### ad_adaptive_agents_test
 Test assignment for “Adaptive Agents” x AIRI.
 
-Для генерации данных и обучения моделей запустить `train.py`.
+Для генерации данных и обучения моделей запустить `train.py`.  
+Для построения скоров с бандитами запустить `plot_results.py path_to_model_weights`
+
+#### Отчет: [wandb](https://api.wandb.ai/links/gvolsky/hrfkckt6)
 
 Вопросы по статье:
 
