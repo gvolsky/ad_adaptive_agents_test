@@ -1,4 +1,5 @@
 import sys
+import wandb
 from functools import partial
 from os import path
 from uuid import uuid4
@@ -26,13 +27,15 @@ def plot_bars(names, bars, name='exp'):
     )
     plt.ylabel('Normalized score')
     plt.ylabel('Bandit scores')
+    plt.plot()
+    wandb.log({name: wandb.Image(plt)})
     plt.savefig(f"{name}.jpg")
     plt.close()
 
 def get_reward(env, algo, config: Config):
     _, _ = env.reset(seed=config.eval_seed)
     _, cumulative_rewards, _ = hist_from_bandit(
-            env, algo, config.num_iterations, config.eval_seed
+            env, algo, config.eval_steps, config.eval_seed
         )
     return cumulative_rewards[-1]
 
@@ -43,12 +46,12 @@ def get_bars(model, config: Config):
     bars = []
     for name in names:
         probs = generate_probs(rng, Config.num_eval_envs, Config.num_arms, type=name)
-        get_reward = partial(get_reward, config=Config)
+        get_rw = partial(get_reward, config=Config)
 
         ucb_rw = np.array([
-            get_reward(BernoulliBandits(p), UCB1(Config.num_arms, Config.rho)) for p in probs
+            get_rw(BernoulliBandits(p), UCB1(Config.num_arms, Config.rho)) for p in probs
         ]).mean()
-        rnd_rw = np.array([get_reward(BernoulliBandits(p), rnd) for p in probs]).mean()
+        rnd_rw = np.array([get_rw(BernoulliBandits(p), rnd) for p in probs]).mean()
         vec_envs = SyncVectorEnv(
                 [lambda prob=prob: BernoulliBandits(prob) for prob in probs]
             )
@@ -58,6 +61,12 @@ def get_bars(model, config: Config):
 
 if __name__ == "__main__":
     PATH = sys.argv[1]
+    wandb.init(
+        project=Config.project,
+        group=Config.group,
+        name=Config.name,
+        mode='offline',
+    )
     model = Transformer(config=Config).to(DEVICE)
     model.load_state_dict(torch.load(PATH), weights_only=True)
     model.eval()
@@ -67,3 +76,4 @@ if __name__ == "__main__":
         bars,
         path.join(Config.data_directory, f'{uuid4()}.jpg')
         )
+    wandb.finish()
